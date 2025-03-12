@@ -29,8 +29,8 @@ def bill_ackman_agent(state: AgentState):
     
     for ticker in tickers:
         progress.update_status("bill_ackman_agent", ticker, "Fetching financial metrics")
-        # You can adjust these parameters (period="annual"/"ttm", limit=5/10, etc.)
-        metrics = get_financial_metrics(ticker, end_date, period="annual", limit=5)
+        # You can adjust these parameters (period="ttm"/"ttm", limit=5/10, etc.)
+        metrics = get_financial_metrics(ticker, end_date, period="ttm", limit=5)
         
         progress.update_status("bill_ackman_agent", ticker, "Gathering financial line items")
         # Request multiple periods of data (annual or TTM) for a more robust long-term view.
@@ -47,7 +47,7 @@ def bill_ackman_agent(state: AgentState):
                 "outstanding_shares"
             ],
             end_date,
-            period="annual",  # or "ttm" if you prefer trailing 12 months
+            period="ttm",  # or "ttm" if you prefer trailing 12 months
             limit=5           # fetch up to 5 annual periods (or more if needed)
         )
         
