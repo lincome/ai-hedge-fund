@@ -42,7 +42,7 @@ def stanley_druckenmiller_agent(state: AgentState):
 
     for ticker in tickers:
         progress.update_status("stanley_druckenmiller_agent", ticker, "Fetching financial metrics")
-        metrics = get_financial_metrics(ticker, end_date, period="annual", limit=5)
+        metrics = get_financial_metrics(ticker, end_date, period="ttm", limit=5)
 
         progress.update_status("stanley_druckenmiller_agent", ticker, "Gathering financial line items")
         # Include relevant line items for Stan Druckenmiller's approach:
@@ -69,7 +69,7 @@ def stanley_druckenmiller_agent(state: AgentState):
                 "ebitda",
             ],
             end_date,
-            period="annual",
+            period="ttm",
             limit=5,
         )
 

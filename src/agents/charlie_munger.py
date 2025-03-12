@@ -28,7 +28,7 @@ def charlie_munger_agent(state: AgentState):
     
     for ticker in tickers:
         progress.update_status("charlie_munger_agent", ticker, "Fetching financial metrics")
-        metrics = get_financial_metrics(ticker, end_date, period="annual", limit=10)  # Munger looks at longer periods
+        metrics = get_financial_metrics(ticker, end_date, period="ttm", limit=10)  # Munger looks at longer periods
         
         progress.update_status("charlie_munger_agent", ticker, "Gathering financial line items")
         financial_line_items = search_line_items(
@@ -50,7 +50,7 @@ def charlie_munger_agent(state: AgentState):
                 "goodwill_and_intangible_assets",
             ],
             end_date,
-            period="annual",
+            period="ttm",
             limit=10  # Munger examines long-term trends
         )
         
