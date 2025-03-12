@@ -32,6 +32,7 @@ def warren_buffett_agent(state: AgentState):
 
         progress.update_status("warren_buffett_agent", ticker, "Gathering financial line items")
         financial_line_items = search_line_items(
+            'warren_buffett_agent',
             ticker,
             [
                 "capital_expenditure",

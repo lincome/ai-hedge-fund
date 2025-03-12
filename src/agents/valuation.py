@@ -36,6 +36,7 @@ def valuation_agent(state: AgentState):
         progress.update_status("valuation_agent", ticker, "Gathering line items")
         # Fetch the specific line_items that we need for valuation purposes
         financial_line_items = search_line_items(
+            'valuation_agent',
             ticker=ticker,
             line_items=[
                 "free_cash_flow",

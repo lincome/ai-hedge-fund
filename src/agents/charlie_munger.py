@@ -32,6 +32,7 @@ def charlie_munger_agent(state: AgentState):
         
         progress.update_status("charlie_munger_agent", ticker, "Gathering financial line items")
         financial_line_items = search_line_items(
+            'charlie_munger_agent',
             ticker,
             [
                 "revenue",

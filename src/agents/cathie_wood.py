@@ -38,6 +38,7 @@ def cathie_wood_agent(state: AgentState):
         progress.update_status("cathie_wood_agent", ticker, "Gathering financial line items")
         # Request multiple periods of data (annual or TTM) for a more robust view.
         financial_line_items = search_line_items(
+            'cathie_wood_agent',
             ticker,
             [
                 "revenue",

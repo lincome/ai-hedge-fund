@@ -35,6 +35,7 @@ def bill_ackman_agent(state: AgentState):
         progress.update_status("bill_ackman_agent", ticker, "Gathering financial line items")
         # Request multiple periods of data (annual or TTM) for a more robust long-term view.
         financial_line_items = search_line_items(
+            'bill_ackman_agent',
             ticker,
             [
                 "revenue",

@@ -1,6 +1,11 @@
 import os
 import pandas as pd
 import requests
+import json
+import logging
+
+logger = logging.getLogger("get_cache")
+logging.basicConfig(filename='portfolio_debug.log', level=logging.ERROR,format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 from data.cache import get_cache
 from data.models import (
@@ -20,15 +25,63 @@ from data.models import (
 _cache = get_cache()
 
 
+def save_json_to_txt(data, filename='data.txt'):
+    """
+    发送API请求并将JSON响应保存到TXT文件
+    """
+    try:
+        # 发送API请求
+        # response = requests.get(url)
+        # response.raise_for_status()  # 检查请求是否成功
+        
+        # # 解析JSON数据
+        # data = response.json()
+        
+        # 将JSON数据保存到TXT文件
+        with open(filename, 'w', encoding='utf-8') as f:
+            try:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+            except TypeError as e:
+                print(f"Data serialization error: {e}")
+            
+        print(f"数据已保存到 {filename}")
+        return True
+
+    except json.JSONDecodeError:
+        print("响应内容不是有效的JSON格式")
+        return False
+        
+def read_json_from_txt(filename='data.txt'):
+    """
+    从TXT文件读取JSON数据
+    """
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except FileNotFoundError:
+        print(f"文件 {filename} 不存在")
+        return None
+    except json.JSONDecodeError:
+        print(f"文件 {filename} 包含无效的JSON格式")
+        return None
+
 def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
     """Fetch price data from cache or API."""
     # Check cache first
-    if cached_data := _cache.get_prices(ticker):
-        # Filter cached data by date range and convert to Price objects
-        filtered_data = [Price(**price) for price in cached_data if start_date <= price["time"] <= end_date]
-        if filtered_data:
-            return filtered_data
-
+    txt_cached_data = read_json_from_txt('data/price_'+ticker+start_date+end_date+'.txt')
+    if txt_cached_data:
+        # Convert cached data to Price objects
+        price_response = PriceResponse(**txt_cached_data)
+        prices = price_response.prices
+        return prices
+    
+    # if cached_data := _cache.get_prices(ticker):
+    #     # Filter cached data by date range and convert to Price objects
+    #     filtered_data = [Price(**price) for price in cached_data if start_date <= price["time"] <= end_date]
+    #     if filtered_data:
+    #         return filtered_data
+    print (1222222222222)
     # If not in cache or no data in range, fetch from API
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
@@ -45,9 +98,9 @@ def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
 
     if not prices:
         return []
-
+    save_json_to_txt(response.json(), filename='data/price_'+ticker+start_date+end_date+'.txt')
     # Cache the results as dicts
-    _cache.set_prices(ticker, [p.model_dump() for p in prices])
+    # _cache.set_prices(ticker, [p.model_dump() for p in prices])
     return prices
 
 
@@ -58,13 +111,23 @@ def get_financial_metrics(
     limit: int = 10,
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
+
+    txt_cached_data = read_json_from_txt('data/financial_metrics_'+ticker+end_date+'.txt')
+    if txt_cached_data:
+        # Convert cached data to Price objects
+        price_response = FinancialMetricsResponse(**txt_cached_data)
+        prices = price_response.financial_metrics
+        return prices
+    
     # Check cache first
-    if cached_data := _cache.get_financial_metrics(ticker):
-        # Filter cached data by date and limit
-        filtered_data = [FinancialMetrics(**metric) for metric in cached_data if metric["report_period"] <= end_date]
-        filtered_data.sort(key=lambda x: x.report_period, reverse=True)
-        if filtered_data:
-            return filtered_data[:limit]
+    # cached_data = _cache.get_financial_metrics(ticker)
+    # logger.error("get_financial_metrics ticker: %s,end_date: %s,period: %s,cached_data: %s",ticker,end_date,period,cached_data)
+    # if cached_data:
+    #     # Filter cached data by date and limit
+    #     filtered_data = [FinancialMetrics(**metric) for metric in cached_data if metric["report_period"] <= end_date]
+    #     filtered_data.sort(key=lambda x: x.report_period, reverse=True)
+    #     if filtered_data:
+    #         return filtered_data[:limit]
 
     # If not in cache or insufficient data, fetch from API
     headers = {}
@@ -83,13 +146,14 @@ def get_financial_metrics(
 
     if not financial_metrics:
         return []
-
+    save_json_to_txt(response.json(), filename='data/financial_metrics_'+ticker+end_date+'.txt')
     # Cache the results as dicts
-    _cache.set_financial_metrics(ticker, [m.model_dump() for m in financial_metrics])
+    # _cache.set_financial_metrics(ticker, [m.model_dump() for m in financial_metrics])
     return financial_metrics
 
 
 def search_line_items(
+    agents: str,
     ticker: str,
     line_items: list[str],
     end_date: str,
@@ -97,6 +161,14 @@ def search_line_items(
     limit: int = 10,
 ) -> list[LineItem]:
     """Fetch line items from API."""
+
+    txt_cached_data = read_json_from_txt('data/search_line_items_'+agents+ticker+end_date+'.txt')
+    if txt_cached_data:
+        # Convert cached data to Price objects
+        price_response = LineItemResponse(**txt_cached_data)
+        prices = price_response.search_results
+        return prices[:limit]
+    
     # If not in cache or insufficient data, fetch from API
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
@@ -120,6 +192,7 @@ def search_line_items(
     if not search_results:
         return []
 
+    save_json_to_txt(response.json(), filename='data/search_line_items_'+agents+ticker+end_date+'.txt')
     # Cache the results
     return search_results[:limit]
 
@@ -131,15 +204,21 @@ def get_insider_trades(
     limit: int = 1000,
 ) -> list[InsiderTrade]:
     """Fetch insider trades from cache or API."""
+
+    txt_cached_data = read_json_from_txt('data/get_insider_trades_'+ticker+end_date+'.txt')
+    if txt_cached_data:
+        # print (txt_cached_data)
+        return [InsiderTrade(**item) for item in txt_cached_data]
+    
     # Check cache first
-    if cached_data := _cache.get_insider_trades(ticker):
-        # Filter cached data by date range
-        filtered_data = [InsiderTrade(**trade) for trade in cached_data 
-                        if (start_date is None or (trade.get("transaction_date") or trade["filing_date"]) >= start_date)
-                        and (trade.get("transaction_date") or trade["filing_date"]) <= end_date]
-        filtered_data.sort(key=lambda x: x.transaction_date or x.filing_date, reverse=True)
-        if filtered_data:
-            return filtered_data
+    # if cached_data := _cache.get_insider_trades(ticker):
+    #     # Filter cached data by date range
+    #     filtered_data = [InsiderTrade(**trade) for trade in cached_data 
+    #                     if (start_date is None or (trade.get("transaction_date") or trade["filing_date"]) >= start_date)
+    #                     and (trade.get("transaction_date") or trade["filing_date"]) <= end_date]
+    #     filtered_data.sort(key=lambda x: x.transaction_date or x.filing_date, reverse=True)
+    #     if filtered_data:
+    #         return filtered_data
 
     # If not in cache or insufficient data, fetch from API
     headers = {}
@@ -181,9 +260,12 @@ def get_insider_trades(
 
     if not all_trades:
         return []
-
+    
+    data_dict = [trade.dict() for trade in all_trades]
+    # print (all_trades)
+    save_json_to_txt(data_dict, filename='data/get_insider_trades_'+ticker+end_date+'.txt')
     # Cache the results
-    _cache.set_insider_trades(ticker, [trade.model_dump() for trade in all_trades])
+    # _cache.set_insider_trades(ticker, [trade.model_dump() for trade in all_trades])
     return all_trades
 
 
@@ -194,15 +276,20 @@ def get_company_news(
     limit: int = 1000,
 ) -> list[CompanyNews]:
     """Fetch company news from cache or API."""
+
+    txt_cached_data = read_json_from_txt('data/get_company_news_'+ticker+end_date+'.txt')
+    if txt_cached_data:
+         return [CompanyNews(**item) for item in txt_cached_data]
+    
     # Check cache first
-    if cached_data := _cache.get_company_news(ticker):
-        # Filter cached data by date range
-        filtered_data = [CompanyNews(**news) for news in cached_data 
-                        if (start_date is None or news["date"] >= start_date)
-                        and news["date"] <= end_date]
-        filtered_data.sort(key=lambda x: x.date, reverse=True)
-        if filtered_data:
-            return filtered_data
+    # if cached_data := _cache.get_company_news(ticker):
+    #     # Filter cached data by date range
+    #     filtered_data = [CompanyNews(**news) for news in cached_data 
+    #                     if (start_date is None or news["date"] >= start_date)
+    #                     and news["date"] <= end_date]
+    #     filtered_data.sort(key=lambda x: x.date, reverse=True)
+    #     if filtered_data:
+    #         return filtered_data
 
     # If not in cache or insufficient data, fetch from API
     headers = {}
@@ -244,9 +331,10 @@ def get_company_news(
 
     if not all_news:
         return []
-
+    data_dict = [trade.dict() for trade in all_news]
+    save_json_to_txt(data_dict, filename='data/get_company_news_'+ticker+end_date+'.txt')
     # Cache the results
-    _cache.set_company_news(ticker, [news.model_dump() for news in all_news])
+    # _cache.set_company_news(ticker, [news.model_dump() for news in all_news])
     return all_news
 
 

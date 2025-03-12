@@ -51,6 +51,7 @@ def stanley_druckenmiller_agent(state: AgentState):
         #   - Leverage: total_debt, shareholders_equity
         #   - Liquidity: cash_and_equivalents
         financial_line_items = search_line_items(
+            'stanley_druckenmiller_agent',
             ticker,
             [
                 "revenue",
