@@ -2,10 +2,10 @@ import os
 import pandas as pd
 import requests
 import json
-import logging
+# import logging
 
-logger = logging.getLogger("get_cache")
-logging.basicConfig(filename='portfolio_debug.log', level=logging.ERROR,format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+# logger = logging.getLogger("get_cache")
+# logging.basicConfig(filename='portfolio_debug.log', level=logging.ERROR,format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 from data.cache import get_cache
 from data.models import (
